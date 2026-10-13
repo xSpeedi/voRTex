@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#141414">
+<title>voRTex</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23ef3340'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #141414;
+    --surface: #1f1f1f;
+    --surface-hover: #292929;
+    --line: #2e2e2e;
+    --text: #f2f2f2;
+    --label: #b8b8b8;
+    --muted: #9b9b9b;
+    --accent: #ef3340;
+    --font: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    background: var(--bg);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  button, input {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .icon {
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: max(24px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+    padding-top: clamp(96px, 24vh, 240px);
+  }
+
+  .logo {
+    display: block;
+    width: 232px;
+    max-width: 70%;
+    height: auto;
+    margin: 0 auto 44px;
+  }
+
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 54px;
+    padding: 0 20px;
+    background: var(--surface);
+    border-radius: 27px;
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1.5px transparent;
+    transition: box-shadow 0.15s;
+  }
+
+  .search:focus-within {
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+  }
+
+  .search .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-size: 16px;
+  }
+
+  .search input::placeholder {
+    color: var(--muted);
+  }
+
+  .search input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+
+  .shortcuts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px 8px;
+    margin-top: 36px;
+    list-style: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .item {
+    position: relative;
+    touch-action: none;
+  }
+
+  .item.dragging {
+    z-index: 5;
+  }
+
+  .item.dragging .tile {
+    background: var(--surface-hover);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  }
+
+  .is-dragging .item .remove {
+    display: none;
+  }
+
+  .shortcut {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+    color: var(--label);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+
+  .tile {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--accent);
+    transition: background-color 0.15s, transform 0.15s;
+  }
+
+  .tile .icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .tile .icon.brand {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tile img {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .tile .letter {
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .label {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .add {
+    color: var(--muted);
+  }
+
+  .add .tile {
+    background: none;
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1.5px var(--line);
+  }
+
+  .remove {
+    display: none;
+    position: absolute;
+    top: -4px;
+    right: calc(50% - 38px);
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .remove .icon {
+    width: 12px;
+    height: 12px;
+    stroke-width: 2.4;
+  }
+
+  .armed .remove {
+    display: grid;
+  }
+
+  .add-item {
+    display: none;
+  }
+
+  .mode-add .add-item {
+    display: block;
+  }
+
+  .done {
+    display: none;
+    margin: 28px auto 0;
+    padding: 11px 26px;
+    border-radius: 22px;
+    background: var(--surface);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .mode-add .done,
+  .mode-remove .done {
+    display: block;
+  }
+
+  .shortcut:active .tile,
+  .done:active {
+    background: var(--surface-hover);
+    transform: scale(0.95);
+  }
+
+  .shortcut:focus-visible,
+  .remove:focus-visible,
+  .done:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) {
+    .shortcut:hover {
+      color: var(--text);
+    }
+
+    .shortcut:hover .tile {
+      background: var(--surface-hover);
+    }
+
+    .add:hover .tile {
+      background: none;
+      box-shadow: inset 0 0 0 1.5px var(--muted);
+    }
+  }
+
+  dialog {
+    width: min(92vw, 360px);
+    margin: auto;
+    padding: 24px 22px 20px;
+    border: 0;
+    border-radius: 26px;
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  dialog h2 {
+    margin-bottom: 18px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .field {
+    display: block;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--label);
+  }
+
+  .field input {
+    display: block;
+    width: 100%;
+    height: 48px;
+    margin-top: 6px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 14px;
+    outline: 0;
+    background: var(--bg);
+    font-size: 16px;
+    box-shadow: inset 0 0 0 1.5px transparent;
+    transition: box-shadow 0.15s;
+  }
+
+  .field input:focus {
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+  }
+
+  .error {
+    min-height: 18px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .actions button {
+    flex: 1;
+    height: 46px;
+    border-radius: 23px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .actions .ghost {
+    background: var(--surface-hover);
+  }
+
+  .actions .primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .actions button:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="6.5"/>
+      <path d="M16 16l4.5 4.5"/>
+    </symbol>
+    <symbol id="i-epic" viewBox="0 0 24 24">
+      <path fill="currentColor" stroke="none" fill-rule="evenodd" d="M5.2 2.5h13.6l1.7 1.7v11.1L12 21.5l-8.5-6.2V4.2z M8 6.5h8v1.7H9.8v1.6h4.6v1.5H9.8v1.6H16v1.7H8z"/>
+    </symbol>
+    <symbol id="i-fortnite" viewBox="0 0 24 24">
+      <path fill="currentColor" stroke="none" d="M6 3h13.5l-1.8 4.6H11.2V10h5.1L15 14.2h-3.8V21H6z"/>
+    </symbol>
+    <symbol id="i-github" viewBox="0 0 16 16">
+      <path fill="currentColor" stroke="none" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </symbol>
+    <symbol id="i-cloud-play" viewBox="0 0 24 24">
+      <path d="M17.5 19H8a5 5 0 1 1 .9-9.92A6 6 0 0 1 20 11.5 4 4 0 0 1 17.5 19z"/>
+      <path d="M11.3 12.2v4.6l4-2.3z" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24">
+      <path d="M7 7h10a4 4 0 0 1 4 4v2.5a3.5 3.5 0 0 1-6 2.5l-1.5-1h-3L9 16a3.5 3.5 0 0 1-6-2.5V11a4 4 0 0 1 4-4z"/>
+      <path d="M8 9.5v3M6.5 11h3"/>
+      <circle cx="15.5" cy="10" r="0.9" fill="currentColor" stroke="none"/>
+      <circle cx="18" cy="12" r="0.9" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14"/>
+    </symbol>
+    <symbol id="i-close" viewBox="0 0 24 24">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="page" id="page">
+
+  <svg class="logo" viewBox="0 0 304 80" role="img" aria-label="voRTex" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#f2f2f2">
+      <path d="M8 30L26 68L44 30"/>
+      <path d="M118 68V10H136C154 10 154 38 136 38H118M136 38L153 68"/>
+      <path d="M166 10H204M185 10V68"/>
+      <path d="M215 49H253A19 19 0 1 0 247.4 62.4"/>
+      <path d="M262 30L292 68M292 30L262 68"/>
+    </g>
+    <path d="M95.6 38.1 L95.1 37.4 L94.5 36.8 L94.0 36.1 L93.4 35.5 L92.8 34.9 L92.1 34.4 L91.5 33.9 L90.8 33.4 L90.1 32.9 L89.4 32.5 L88.6 32.1 L87.9 31.7 L87.1 31.4 L86.3 31.1 L85.5 30.8 L84.7 30.6 L83.9 30.4 L83.1 30.2 L82.2 30.1 L81.4 30.1 L80.5 30.0 L79.7 30.0 L78.9 30.0 L78.0 30.1 L77.2 30.2 L76.3 30.4 L75.5 30.5 L74.7 30.8 L73.9 31.0 L73.1 31.3 L72.3 31.6 L71.6 32.0 L70.8 32.4 L70.1 32.8 L69.4 33.2 L68.7 33.7 L68.0 34.2 L67.4 34.8 L66.8 35.4 L66.2 36.0 L65.6 36.6 L65.1 37.2 L64.6 37.9 L64.1 38.6 L63.7 39.3 L63.2 40.1 L62.9 40.8 L62.5 41.6 L62.2 42.4 L61.9 43.2 L61.7 44.0 L61.5 44.8 L61.3 45.6 L61.2 46.4 L61.1 47.3 L61.0 48.1 L61.0 49.0 L61.0 49.8 L61.1 50.6 L61.2 51.5 L61.3 52.3 L61.5 53.1 L61.7 54.0 L61.9 54.8 L62.2 55.6 L62.5 56.3 L62.8 57.1 L63.2 57.9 L63.6 58.6 L64.1 59.3 L64.5 60.0 L65.0 60.7 L65.6 61.4 L66.1 62.0 L66.7 62.6 L67.3 63.2 L68.0 63.7 L68.6 64.2 L69.3 64.7 L70.0 65.2 L70.8 65.6 L71.5 66.0 L72.3 66.4 L73.0 66.7 L73.8 66.9 L74.7 67.0 L75.5 67.1 L76.4 67.1 L77.2 67.1 L78.0 67.1 L78.8 67.0 L79.6 66.8 L80.4 66.7 L81.2 66.5 L82.0 66.3 L82.7 66.0 L83.4 65.7 L84.1 65.4 L84.8 65.1 L85.5 64.7 L86.1 64.3 L86.7 63.9 L87.3 63.4 L87.8 62.9 L88.4 62.4 L88.9 61.9 L89.3 61.4 L89.8 60.9 L90.2 60.3 L90.6 59.7 L90.9 59.1 L91.2 58.5 L91.5 57.9 L91.8 57.3 L92.0 56.7 L92.2 56.1 L92.4 55.5 L92.5 54.9 L92.6 54.2 L92.7 53.6" stroke="#ef3340"/>
+  </svg>
+
+  <form class="search" id="search" action="https://www.google.com/search" method="get" role="search">
+    <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+    <input type="search" name="q" placeholder="Pesquise ou digite o endereço" aria-label="Pesquisar" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+  </form>
+
+  <ul class="shortcuts" id="shortcuts"></ul>
+  <button class="done" id="done" type="button">Concluído</button>
+
+</main>
+
+<dialog id="dialog">
+  <form id="add-form" novalidate>
+    <h2>Novo atalho</h2>
+    <label class="field">Nome
+      <input name="name" type="text" maxlength="24" autocomplete="off">
+    </label>
+    <label class="field">Endereço
+      <input name="url" type="text" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="exemplo.com">
+    </label>
+    <p class="error" id="error" role="alert"></p>
+    <div class="actions">
+      <button class="ghost" type="button" id="cancel">Cancelar</button>
+      <button class="primary" type="submit">Adicionar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  (function () {
+    var STORAGE_KEY = 'vortex.atalhos';
+    var VERSION_KEY = 'vortex.versao';
+
+    var DEFAULTS = [
+      { name: 'Epic Games', url: 'https://www.epicgames.com', icon: 'i-epic' },
+      { name: 'Fortnite', url: 'https://www.fortnite.com/item-shop', icon: 'i-fortnite' },
+      { name: 'GeForce Now', url: 'https://play.geforcenow.com', icon: 'i-cloud-play' },
+      { name: 'Xcloud', url: 'https://www.xbox.com/play', icon: 'i-gamepad' },
+      { name: 'GitHub', url: 'https://github.com', icon: 'i-github' }
+    ];
+    var KNOWN_ICONS = ['i-epic', 'i-fortnite', 'i-cloud-play', 'i-gamepad', 'i-github'];
+    var BRAND_ICONS = ['i-epic', 'i-fortnite', 'i-github'];
+
+    var page = document.getElementById('page');
+    var list = document.getElementById('shortcuts');
+    var dialog = document.getElementById('dialog');
+    var form = document.getElementById('add-form');
+    var errorEl = document.getElementById('error');
+
+    var shortcuts = load();
+    var mode = null;
+    var armed = null;
+    var drag = null;
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var holdTimer = null;
+    var holdOrigin = null;
+    var swallowClick = false;
+
+    function load() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          var data = JSON.parse(raw);
+          if (Array.isArray(data)) {
+            var migrated = data.filter(function (s) {
+              return s && typeof s.name === 'string' && typeof s.url === 'string' && /^https?:\/\//i.test(s.url);
+            }).map(function (s) {
+              var base = DEFAULTS.filter(function (d) { return d.icon === s.icon; })[0];
+              return base ? { name: base.name, url: base.url, icon: base.icon } : s;
+            });
+            if (localStorage.getItem(VERSION_KEY) !== '2' && !migrated.some(function (s) { return s.icon === 'i-github'; })) {
+              migrated.push(DEFAULTS[DEFAULTS.length - 1]);
+            }
+            return migrated;
+          }
+        }
+      } catch (err) {}
+      return DEFAULTS.slice();
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(shortcuts));
+        localStorage.setItem(VERSION_KEY, '2');
+      } catch (err) {}
+    }
+
+    function hostOf(url) {
+      try {
+        return new URL(url).hostname.replace(/^www\./, '');
+      } catch (err) {
+        return '';
+      }
+    }
+
+    function buildTile(s) {
+      var tile = document.createElement('span');
+      tile.className = 'tile';
+
+      if (s.icon && KNOWN_ICONS.indexOf(s.icon) !== -1) {
+        var brand = BRAND_ICONS.indexOf(s.icon) !== -1 ? ' brand' : '';
+        tile.innerHTML = '<svg class="icon' + brand + '" aria-hidden="true"><use href="#' + s.icon + '"/></svg>';
+        return tile;
+      }
+
+      var letter = function () {
+        var el = document.createElement('span');
+        el.className = 'letter';
+        el.textContent = (s.name || hostOf(s.url) || '?').charAt(0).toUpperCase();
+        tile.textContent = '';
+        tile.appendChild(el);
+      };
+
+      var host = hostOf(s.url);
+      if (host) {
+        var img = new Image();
+        img.alt = '';
+        img.onerror = letter;
+        img.src = 'https://www.google.com/s2/favicons?sz=64&domain=' + encodeURIComponent(host);
+        tile.appendChild(img);
+      } else {
+        letter();
+      }
+      return tile;
+    }
+
+    function render() {
+      list.textContent = '';
+
+      shortcuts.forEach(function (s, index) {
+        var li = document.createElement('li');
+        li.className = 'item';
+        li.dataset.index = index;
+        if (mode === 'remove' && s === armed) li.classList.add('armed');
+
+        var a = document.createElement('div');
+        a.className = 'shortcut';
+        a.setAttribute('role', 'link');
+        a.tabIndex = 0;
+        a.dataset.url = s.url;
+
+        var label = document.createElement('span');
+        label.className = 'label';
+        label.textContent = s.name;
+
+        a.appendChild(buildTile(s));
+        a.appendChild(label);
+
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'remove';
+        remove.dataset.index = index;
+        remove.setAttribute('aria-label', 'Remover ' + s.name);
+        remove.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-close"/></svg>';
+
+        li.appendChild(a);
+        li.appendChild(remove);
+        list.appendChild(li);
+      });
+
+      var addItem = document.createElement('li');
+      addItem.className = 'item add-item';
+      addItem.innerHTML =
+        '<button class="shortcut add" type="button" id="add">' +
+        '<span class="tile"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></span>' +
+        '<span class="label">Adicionar</span></button>';
+      list.appendChild(addItem);
+    }
+
+    function setMode(next, item) {
+      mode = next;
+      armed = next === 'remove' && item ? shortcuts[Number(item.dataset.index)] : null;
+      page.classList.toggle('mode-add', next === 'add');
+      page.classList.toggle('mode-remove', next === 'remove');
+      Array.prototype.forEach.call(list.children, function (li) {
+        li.classList.toggle('armed', next === 'remove' && li === item);
+      });
+    }
+
+    function itemOf(el) {
+      var shortcut = el.closest('.shortcut[data-url]');
+      return shortcut ? shortcut.parentNode : null;
+    }
+
+    function isEmptyArea(el) {
+      return !el.closest('.shortcut, button, input, label, dialog, .search');
+    }
+
+    function enterMode(target) {
+      var item = itemOf(target);
+      if (item) setMode('remove', item);
+      else if (isEmptyArea(target)) setMode('add');
+    }
+
+    function open(shortcut) {
+      location.href = shortcut.dataset.url;
+    }
+
+    list.addEventListener('click', function (e) {
+      var remove = e.target.closest('.remove');
+      if (remove) {
+        shortcuts.splice(Number(remove.dataset.index), 1);
+        save();
+        render();
+        return;
+      }
+      if (e.target.closest('#add')) {
+        openDialog();
+        return;
+      }
+      var shortcut = e.target.closest('.shortcut[data-url]');
+      if (shortcut && !mode && !swallowClick) open(shortcut);
+    });
+
+    list.addEventListener('keydown', function (e) {
+      var shortcut = e.target.closest('.shortcut[data-url]');
+      if (shortcut && !mode && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        open(shortcut);
+      }
+    });
+
+    function cancelHold() {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+
+    document.addEventListener('pointerdown', function (e) {
+      swallowClick = false;
+      cancelHold();
+      drag = null;
+      if (dialog.open) return;
+
+      var item = itemOf(e.target);
+      if (item && e.button === 0) {
+        drag = { item: item, startX: e.clientX, startY: e.clientY, ready: mode === 'remove', fromHold: false, started: false };
+      }
+
+      if (mode) return;
+      if (!item && !isEmptyArea(e.target)) return;
+      holdOrigin = { x: e.clientX, y: e.clientY };
+      var target = e.target;
+      holdTimer = setTimeout(function () {
+        holdTimer = null;
+        swallowClick = true;
+        enterMode(target);
+        if (drag) {
+          drag.ready = true;
+          drag.fromHold = true;
+        }
+      }, 500);
+    });
+
+    document.addEventListener('pointermove', function (e) {
+      if (holdTimer && (Math.abs(e.clientX - holdOrigin.x) > 10 || Math.abs(e.clientY - holdOrigin.y) > 10)) {
+        cancelHold();
+      }
+      if (!drag) return;
+      if (!drag.started) {
+        if (drag.ready && (Math.abs(e.clientX - drag.startX) > 6 || Math.abs(e.clientY - drag.startY) > 6)) {
+          startDrag(e);
+        }
+        return;
+      }
+      moveDrag(e);
+    });
+
+    function finishPointer() {
+      cancelHold();
+      if (drag && drag.started) endDrag();
+      drag = null;
+    }
+
+    document.addEventListener('pointerup', finishPointer);
+    document.addEventListener('pointercancel', finishPointer);
+
+    function dragItems() {
+      return Array.prototype.slice.call(list.querySelectorAll('.item:not(.add-item)'));
+    }
+
+    function startDrag(e) {
+      var rect = drag.item.getBoundingClientRect();
+      drag.grabX = e.clientX - rect.left;
+      drag.grabY = e.clientY - rect.top;
+      drag.started = true;
+      swallowClick = true;
+      drag.item.classList.add('dragging');
+      page.classList.add('is-dragging');
+      moveDrag(e);
+    }
+
+    function placeDragged(e) {
+      var li = drag.item;
+      li.style.transition = 'none';
+      li.style.transform = '';
+      var rect = li.getBoundingClientRect();
+      var dx = e.clientX - drag.grabX - rect.left;
+      var dy = e.clientY - drag.grabY - rect.top;
+      li.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(1.06)';
+    }
+
+    function moveDrag(e) {
+      var li = drag.item;
+      var items = dragItems();
+      var target = null;
+
+      items.forEach(function (other) {
+        if (other === li) return;
+        var left = other.offsetLeft;
+        var top = other.offsetTop;
+        if (e.pageX >= left && e.pageX <= left + other.offsetWidth && e.pageY >= top && e.pageY <= top + other.offsetHeight) {
+          target = other;
+        }
+      });
+
+      if (target) {
+        var before = items.map(function (el) {
+          return { el: el, left: el.offsetLeft, top: el.offsetTop };
+        });
+
+        if (items.indexOf(li) < items.indexOf(target)) target.after(li);
+        else target.before(li);
+
+        if (!reduceMotion) {
+          before.forEach(function (b) {
+            if (b.el === li) return;
+            var dx = b.left - b.el.offsetLeft;
+            var dy = b.top - b.el.offsetTop;
+            if (!dx && !dy) return;
+            b.el.style.transition = 'none';
+            b.el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+            b.el.offsetWidth;
+            b.el.style.transition = 'transform 0.18s ease';
+            b.el.style.transform = '';
+          });
+        }
+      }
+
+      placeDragged(e);
+    }
+
+    function endDrag() {
+      var order = dragItems().map(function (li) {
+        return Number(li.dataset.index);
+      });
+      shortcuts = order.map(function (i) {
+        return shortcuts[i];
+      });
+      save();
+      page.classList.remove('is-dragging');
+      if (drag.fromHold) setMode(null);
+      render();
+    }
+
+    document.addEventListener('contextmenu', function (e) {
+      if (dialog.open || e.target.closest('input')) return;
+      e.preventDefault();
+      swallowClick = true;
+      if (!mode) enterMode(e.target);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (swallowClick) {
+        swallowClick = false;
+        return;
+      }
+      if (mode && !dialog.open && isEmptyArea(e.target)) setMode(null);
+    });
+
+    document.getElementById('done').addEventListener('click', function () {
+      setMode(null);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && mode && !dialog.open) setMode(null);
+    });
+
+    function openDialog() {
+      form.reset();
+      errorEl.textContent = '';
+      dialog.showModal();
+      form.elements.name.focus();
+    }
+
+    document.getElementById('cancel').addEventListener('click', function () {
+      dialog.close();
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = form.elements.name.value.trim();
+      var raw = form.elements.url.value.trim();
+      var url;
+
+      if (!raw) {
+        errorEl.textContent = 'Digite o endereço do site.';
+        return;
+      }
+      if (!/^[a-z][a-z0-9+.-]*:/i.test(raw)) raw = 'https://' + raw;
+
+      try {
+        var parsed = new URL(raw);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error();
+        url = parsed.href;
+      } catch (err) {
+        errorEl.textContent = 'Endereço inválido.';
+        return;
+      }
+
+      shortcuts.push({ name: name || hostOf(url), url: url });
+      save();
+      render();
+      dialog.close();
+    });
+
+    document.getElementById('search').addEventListener('submit', function (e) {
+      var value = this.elements.q.value.trim();
+      if (!value) {
+        e.preventDefault();
+        return;
+      }
+      if (/^https?:\/\//i.test(value)) {
+        e.preventDefault();
+        location.href = value;
+      } else if (!/\s/.test(value) && /^[\w-]+(\.[\w-]+)+(:\d+)?([\/?#].*)?$/.test(value)) {
+        e.preventDefault();
+        location.href = 'https://' + value;
+      }
+    });
+
+    render();
+  })();
+</script>
+
+</body>
+</html>
